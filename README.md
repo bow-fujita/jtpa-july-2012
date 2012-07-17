@@ -6,12 +6,13 @@
 ## 事前準備
 
 node、npm、git、ssh、heroku、mysqlがローカル環境にインストールされていること（以下のコマンドでバージョンを確認）。
+**nodeは最新の0.8系がherokuでサポートされていないため0.6系がインストールされていること。**
 
 	$ node --version
-	v0.8.2
+	v0.6.18
 	
 	$ npm --version
-	1.1.36
+	1.1.21
 	
 	$ git --version
 	git version 1.7.5.4
