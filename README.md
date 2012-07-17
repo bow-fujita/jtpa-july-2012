@@ -67,5 +67,56 @@ nodeを起動する。
 ブラウザから<http://localhost:3000/>にアクセスしてみる。
 
 
+## herokuにアプリをデプロイする
+
+heroku上でブートストラップとなる`Procfile`を作る。
+
+	$ echo 'web: node app.js' > Procfile
+
+nodeの待受ポート番号の指定で`$PORT`環境変数を優先させるように`app.js`を修正する（差分は[こちら](https://github.com/bow-fujita/jtpa-july-2012/commit/00b35ed2b3c335febe7cf0b72acf3631f8e5b3c3#app.js)を参照）。
+
+ローカルにgitリポジトリを作成する。
+
+	$ pwd
+	~/jtpa-hackathon  # カレントディレクトリを確認
+	$ git init
+
+`.gitignore`に`node_modules/`を追記する。
+
+	$ echo 'node_modules/' >> .gitignore
+
+ローカルのgitリポジトリに既存のファイルをコミットする。
+
+	$ git add .
+	$ git commit -m 'Initial commit'
+
+ターミナルからherokuにログインする。
+
+	$ heroku login
+	Enter your Heroku credentials.
+	Email: account@yourdomain.com
+	Password (typing will be hidden):
+	Authentication successful.
+
+heroku上に新しいアプリケーションを作成する。
+
+	$ heroku create
+	Creating falling-galaxy-1006... done, stack is cedar
+	http://falling-galaxy-1006.herokuapp.com/ | git@heroku.com:falling-galaxy-1006.git
+	Git remote heroku added
+
+herokuの[My Apps](https://api.heroku.com/myapps)ページに新しいアプリケーションが追加されていることを確認する。
+ローカルのgitリポジトリにコミットしたファイルを、アプリケーション上のgitリポジトリにプッシュする。
+
+	$ git push heroku master
+	（略）
+	-----> Launching... done, v3
+	       http://falling-galaxy-1006.herokuapp.com deployed to Heroku
+	
+	To git@heroku.com:falling-galaxy-1006.git
+	* [new branch]      master -> master
+
+
+ブラウザから`http://<herokuアプリ名>.herokuapp.com`にアクセスしてみる。
 
 
