@@ -129,6 +129,7 @@ nodeの待受ポート番号の指定で`$PORT`環境変数を優先させるよ
 `views/index.ejs`や`views/layout.ejs`にHTMLを書き加えて、`Welcome to Express`のページがどう変化するかを見てみる。
 
 *views/index.ejs*
+
 	<h1><%= title %></h1>
 	<p>Welcome to <%= title %></p>
 	<p>Hello, JTPA!</p>
@@ -141,6 +142,7 @@ nodeの待受ポート番号の指定で`$PORT`環境変数を優先させるよ
 まずコントローラを`routes/index.js`に追加する。
 
 *routes/index.js*
+
 	exports.mytemplate = function(req, res) {
 		res.render('mytemplate', {
 			title: 'My Template'
@@ -154,6 +156,7 @@ nodeの待受ポート番号の指定で`$PORT`環境変数を優先させるよ
 続いて、`/mytemplate`へのリクエストを追加したコントローラにルーティングするコードを`app.js`に追加する。
 
 *app.js*
+
 	app.get('/', routes.index);
 	app.get('/mytemplate/:p', routes.mytemplate); // 追加
 
@@ -162,10 +165,72 @@ nodeの待受ポート番号の指定で`$PORT`環境変数を優先させるよ
 最後にビュースクリプト`views/mytemplate.ejs`を作成する。
 
 *views/mytemplate.ejs*
+
 	<h1>Param1: <%= param1 %></h1>
 	<h2>Param2: <%= param2 %></h2>
 
 
 nodeを起動して、ブラウザから<http://localhost:3000/mytemplate/1>にアクセスしてみる。
 （ここまでの差分は[こちら](https://github.com/bow-fujita/jtpa-july-2012/commit/6c7a54f760b292410d7915cbf0692ad4b7977dda)を参照）
+
+
+## JSONを返すAPIを作る
+
+ビュースクリプトを使わず、データをJSONで返すようなAPIを作ってみる。
+
+まずコントローラを`routes/index.js`に追加する。
+
+*routes/index.js*
+
+	exports.jsonapi = function(req, res) {
+		var json = {
+			name: 'obama'
+		  , job: 'president'
+		};
+		res.send(json);
+	};
+
+`app.js`でルーティングする。
+
+*app.js*
+
+	app.get('/', routes.index);
+	app.get('/mytemplate/:p', routes.mytemplate);
+	app.get('/jsonapi', routes.jsonapi); // 追加
+
+nodeを起動して、ターミナルから`curl`コマンドで<http://localhost:3000/jsonapi>にアクセスしてみる。
+
+	$ curl -v http://localhost:3000/jsonapi
+	> GET /jsonapi HTTP/1.1
+	> User-Agent: curl/7.21.4 (universal-apple-darwin11.0) libcurl/7.21.4 OpenSSL/0.9.8r zlib/1.2.5
+	> Host: localhost:3000
+	> Accept: */*
+	>
+	< HTTP/1.1 200 OK
+	< X-Powered-By: Express
+	< Content-Type: application/json; charset=utf-8
+	< Content-Length: 34
+	< Connection: keep-alive
+	<
+	{"name":"obama","job":"president"}
+
+`res.send()`にオブジェクトリテラルを渡すと、nodeはContent-Typeヘッダを`application/json`にセットして、JSON形式でレスポンスボディを返すようになっている。
+
+次に、クエリーストリングで指定されたパラメータをレスポンスに含めるようにAPIを改造する。
+
+*routes/index.js*
+
+	exports.jsonapi = function(req, res) {
+		var json = {
+			name: 'obama'
+		  , job: 'president'
+		  , salary: req.query.salary || 'unknown'
+		};
+		res.send(json);
+	};
+
+`curl`コマンドで<http://localhost:3000/jsonapi?salary=100>にアクセスすると、`{"name":"obama","job":"president","salary":"100"}`というJSONが返ってくる。
+<http://localhost:3000/jsonapi>にアクセスすると、`{"name":"obama","job":"president","salary":"unknown"}`というJSONが返ってくる。
+
+（ここまでの差分は[こちら](https://github.com/bow-fujita/jtpa-july-2012/commit/cd5c8fd830e0ab81858dbb7c712fff9b1f782871)を参照）
 
