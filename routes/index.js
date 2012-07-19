@@ -23,3 +23,14 @@ exports.jsonapi = function(req, res){
   };
   res.send(json);
 };
+
+
+exports.set_session = function(req, res){
+  req.session.value = req.params.value;
+  res.send('value = '+req.params.value);
+};
+
+exports.get_session = function(req, res){
+  res.send('session.value = '+req.session.value);
+}
+
