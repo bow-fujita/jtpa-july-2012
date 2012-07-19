@@ -14,3 +14,12 @@ exports.mytemplate = function(req, res){
     , param2: 'hard coded'
   });
 };
+
+exports.jsonapi = function(req, res){
+  var json = {
+      name: 'obama'
+    , job: 'president'
+    , salary: req.query.salary || 'unknown'
+  };
+  res.send(json);
+};
