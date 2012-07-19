@@ -231,6 +231,39 @@ nodeを起動して、ターミナルから`curl`コマンドで<http://localhos
 
 `curl`コマンドで<http://localhost:3000/jsonapi?salary=100>にアクセスすると、`{"name":"obama","job":"president","salary":"100"}`というJSONが返ってくる。
 <http://localhost:3000/jsonapi>にアクセスすると、`{"name":"obama","job":"president","salary":"unknown"}`というJSONが返ってくる。
-
 （ここまでの差分は[こちら](https://github.com/bow-fujita/jtpa-july-2012/commit/cd5c8fd830e0ab81858dbb7c712fff9b1f782871)を参照）
+
+
+## セッションを扱う
+
+セッションはユーザーのログイン状態を追跡するためなどに使われる。
+ここでは簡単なセッションへの保存、読取を行なってみる。
+
+まずコントローラに2つのメソッドを追加する。
+
+*routes/index.js*
+
+	exports.set_session = function(req, res){
+		req.session.value = req.params.value;
+		res.send('value = '+req.params.value);
+	};
+
+	exports.get_session = function(req, res){
+		res.send('session.value = '+req.session.value);
+	}
+
+`app.js`でルーティングする。
+
+*app.js*
+
+	app.get('/', routes.index);
+	app.get('/mytemplate/:p', routes.mytemplate);
+	app.get('/jsonapi', routes.jsonapi);
+	app.get('/set/:value', routes.set_session); // 追加
+	app.get('/get', routes.get_session); // 追加
+
+ブラウザで<http://localhost:3000/get>にアクセスすると`session.value = undefined`と表示される。
+続いて<http://localhost:3000/set/111>にアクセスすると`value = 111`と表示され、セッションに`111`という値が保存される。
+再び<http://localhost:3000/get>にアクセスすると`session.value = 111`と表示される。
+（ここまでの差分は[こちら](https://github.com/bow-fujita/jtpa-july-2012/commit/d5a5c6343b9197c25d1f8f710b99febddfd9f4f3)を参照）
 
