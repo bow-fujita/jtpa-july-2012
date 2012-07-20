@@ -267,3 +267,64 @@ nodeを起動して、ターミナルから`curl`コマンドで<http://localhos
 再び<http://localhost:3000/get>にアクセスすると`session.value = 111`と表示される。
 （ここまでの差分は[こちら](https://github.com/bow-fujita/jtpa-july-2012/commit/d5a5c6343b9197c25d1f8f710b99febddfd9f4f3)を参照）
 
+
+## herokuのDaaSを使う
+
+heroku上のアプリケーションにデータベースのアドオンを追加して、DaaS（Database as a Service）としてローカルのnodeから利用する。
+
+herokuの[Add-ons](https://addons.heroku.com/)のページから[ClearDB MySQL Database](https://addons.heroku.com/cleardb)を選択して、無料版のIgniteのAddボタンをクリックする。
+先ほど`heroku create`で作ったアプリケーション名を選択してSelectボタンをクリックすると、ClearDBがアプリケーションにインストールされて即座に利用可能となる。
+
+ターミナルで`heroku config`を実行した際に`CLEARDB_DATABSE_URL`と表示されたものが、ClearDBへのDSN（データソース名）となっており、以下の構成をしている。
+
+	mysql://{username}:{password}@{hostname}/{dbname}?reconnect=true
+
+`mysqlshow`コマンドでローカルからClearDBに接続できることを確認する。
+
+	$ mysqlshow -u {username} -p{password} -h {hostname} {dbname}
+	Database: heroku_xxxxxxxxxxxxxxx
+	+--------+
+	| Tables |
+	+--------+
+	+--------+
+
+まずテーブル定義と初期データを挿入するSQLスクリプト`test.sql`を作る。
+
+*test.sql*
+
+	CREATE TABLE IF NOT EXISTS table1
+	(
+		id INTEGER NOT NULL UNIQUE,
+		name VARCHAR(50),
+		age INTEGER
+	);
+	
+	INSERT INTO table1 VALUES(1, 'Iron Man', 20);
+	INSERT INTO table1 VALUES(2, 'Black Widow', 21);
+	INSERT INTO table1 VALUES(3, 'Captain America', 22);
+
+ClearDBに対してSQLスクリプトを実行する。
+
+	$ mysql -u {username} -p{password} -h {hostname} {dbname} < test.sql
+
+`table1`テーブルが作られたことを確認する。
+
+	$ mysqlshow -u {username} -p{password} -h {hostname} {dbname}
+	Database: heroku_xxxxxxxxxxxxxxx
+	+--------+
+	| Tables |
+	+--------+
+	| table1 |
+	+--------+
+	
+	$ mysql -u {username} -p{password} -h {hostname} {dbname} -e 'SELECT * FROM table1'
+	+----+-----------------+------+
+	| id | name            | age  |
+	+----+-----------------+------+
+	|  1 | Iron Man        |   20 |
+	|  2 | Black Widow     |   21 |
+	|  3 | Captain America |   22 |
+	+----+-----------------+------+
+
+
+
