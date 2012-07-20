@@ -65,3 +65,24 @@ exports.db_select = function(req, res){
   );
 };
 
+exports.db_insert = function(req, res){
+  var id = req.query.id
+    , name = req.query.name
+    , age = req.query.age;
+
+  mysql.query('INSERT INTO table1 VALUES(?, ?, ?)', [id, name, age],
+    function(err, result, fields) {
+      if(err) {
+        res.send(500);
+        throw err;
+      }
+
+      var content = []
+      content.push('id: '+id);
+      content.push('name: '+name);
+      content.push('age: '+age);
+      res.send('<h2>New record</h2>'+content.join('<br />'));
+    }
+  );
+};
+
