@@ -270,12 +270,19 @@ nodeを起動して、ターミナルから`curl`コマンドで<http://localhos
 
 ## herokuのDaaSを使う
 
-heroku上のアプリケーションにデータベースのアドオンを追加して、DaaS（Database as a Service）としてローカルのnodeから利用する。
+heroku上のアプリケーションにデータベースのアドオン[ClearDB MySQL Database](https://addons.heroku.com/cleardb)を追加して、DaaS（Database as a Service）としてローカルのnodeから利用する。
 
-herokuの[Add-ons](https://addons.heroku.com/)のページから[ClearDB MySQL Database](https://addons.heroku.com/cleardb)を選択して、無料版のIgniteのAddボタンをクリックする。
-先ほど`heroku create`で作ったアプリケーション名を選択してSelectボタンをクリックすると、ClearDBがアプリケーションにインストールされて即座に利用可能となる。
+	$ heroku addon:add cleardb
+	Adding cleardb to falling-galaxy-1006... done, v4 (free)
+	Use `heroku addons:docs cleardb` to view documentation
 
-ターミナルで`heroku config`を実行した際に`CLEARDB_DATABSE_URL`と表示されたものが、ClearDBへのDSN（データソース名）となっており、以下の構成をしている。
+	$ heroku addons
+	=== falling-galaxy-1006 Configured Add-ons
+	cleardb:ignite
+
+	$ heroku config
+
+`heroku config`を実行した際に`CLEARDB_DATABSE_URL`と表示されたものが、ClearDBへのDSN（データソース名）となっており、以下の構成をしている。
 
 	mysql://{username}:{password}@{hostname}/{dbname}?reconnect=true
 
@@ -327,4 +334,115 @@ ClearDBに対してSQLスクリプトを実行する。
 	+----+-----------------+------+
 
 
+## nodeからClearDBを操作する
+
+`mysql`モジュールを使って、nodeからheroku上のClearDBにアクセスしてみる。
+
+まず`package.json`を編集して、`mysql`モジュールを`dependencies`に追加する。
+**`node-mysql`の最新バージョンである2.0系は使わず、0.9系を明示的に指定する。**
+
+*package.json*
+
+	{
+		"name": "jtpa-hackathon"
+	  , "version": "0.0.1"
+	  , "private": true
+	  , "engines": {
+		  "node": "0.8.x"
+		, "npm": "1.1.x"
+	  }
+	  , "dependencies": {
+		  "express": "2.5.11"
+		, "ejs": ">= 0.0.1"
+		, "mysql": ">= 0.9.5" // 追加
+	  }
+	}
+
+編集が終わったら、`npm install`を実行して`mysql`モジュールをインストールする。
+
+続いて、データベースを操作するコントローラを`routes/index.js`に実装していく。
+はじめに`mysql`モジュールを使ったクライントをローカル変数として作成してDSNの設定を行う。
+
+*routes/index.js*
+
+	var mysql = require('mysql').createClient();
+	mysql.host = 'us-cdbr-east.cleardb.com';
+	mysql.user = 'xxxxxxxxxxxxxx';
+	mysql.password = 'xxxxxxxx';
+	mysql.database = 'heroku_xxxxxxxxxxxxxxx'
+
+データベースからデータを取得するコントローラを追加して、`app.js`でルーティングする。
+
+*routes/index.js*
+
+	exports.db_select = function(req, res){
+	  mysql.query('SELECT * FROM table1 WHERE id = ?', [req.params.id],
+		function(err, result, fields) {
+		  if(err) {
+			res.send(500);
+			throw err;
+		  }
+
+		  if(result.length) {
+			var content = []
+			  , record = result.shift();
+
+			content.push('id: '+record.id);
+			content.push('name: '+record.name);
+			content.push('age: '+record.age);
+			res.send(content.join('<br />'));
+		  }
+		  else {
+			res.send(404);
+		  }
+		}
+	  );
+	};
+
+*app.js*
+
+	app.get('/set/:value', routes.set_session);
+	app.get('/get', routes.get_session);
+	app.get('/db_select/:id', routes.db_select); // 追加
+
+ブラウザ、または`curl`コマンドで、<http://localhost:3000/db_select/1>にアクセスしてみる。
+（ここまでの差分は[こちら](https://github.com/bow-fujita/jtpa-july-2012/commit/4f1faff7992c7be98d4070f0b4afd450d80992d7)を参照）
+
+
+次にデータベースにデータを挿入するコントローラを追加して、`app.js`でルーティングする。
+
+*routes/index.js*
+
+	exports.db_insert = function(req, res){
+	  var id = req.query.id
+		, name = req.query.name
+		, age = req.query.age;
+
+	  mysql.query('INSERT INTO table1 VALUES(?, ?, ?)', [id, name, age],
+		function(err, result, fields) {
+		  if(err) {
+			res.send(500);
+			throw err;
+		  }
+
+		  var content = []
+		  content.push('id: '+id);
+		  content.push('name: '+name);
+		  content.push('age: '+age);
+		  res.send('<h2>New record</h2>'+content.join('<br />'));
+		}
+	  );
+	};
+
+*app.js*
+
+	app.get('/set/:value', routes.set_session);
+	app.get('/get', routes.get_session);
+	app.get('/db_select/:id', routes.db_select);
+	app.get('/db_insert', routes.db_insert); // 追加
+
+ブラウザ、または`curl`コマンドで、<http://localhost:3000/db_insert?id=4&name=Hulk&age=30>にアクセスしてみる。
+（ここまでの差分は[こちら](https://github.com/bow-fujita/jtpa-july-2012/commit/0b11d07d98e8a84b91d538b12fcdfaecad594588)を参照）
+
+### おつかれさまでした
 
