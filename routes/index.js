@@ -32,5 +32,36 @@ exports.set_session = function(req, res){
 
 exports.get_session = function(req, res){
   res.send('session.value = '+req.session.value);
-}
+};
+
+
+var mysql = require('mysql').createClient();
+mysql.host = 'us-cdbr-east.cleardb.com';
+mysql.user = 'xxxxxxxxxxxxxx';
+mysql.password = 'xxxxxxxx';
+mysql.database = 'heroku_xxxxxxxxxxxxxxx'
+
+exports.db_select = function(req, res){
+  mysql.query('SELECT * FROM table1 WHERE id = ?', [req.params.id],
+    function(err, result, fields) {
+      if(err) {
+        res.send(500);
+        throw err;
+      }
+
+      if(result.length) {
+        var content = []
+          , record = result.shift();
+
+        content.push('id: '+record.id);
+        content.push('name: '+record.name);
+        content.push('age: '+record.age);
+        res.send(content.join('<br />'));
+      }
+      else {
+        res.send(404);
+      }
+    }
+  );
+};
 

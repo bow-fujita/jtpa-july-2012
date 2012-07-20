@@ -36,6 +36,7 @@ app.get('/mytemplate/:p', routes.mytemplate);
 app.get('/jsonapi', routes.jsonapi);
 app.get('/set/:value', routes.set_session);
 app.get('/get', routes.get_session);
+app.get('/db_select/:id', routes.db_select);
 
 app.listen(process.env.PORT || 3000, function(){
   console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
